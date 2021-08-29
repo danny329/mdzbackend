@@ -37,42 +37,42 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 @SpringBootTest
 class MdzbackendApplicationTests {
 
-	@Test
-	public void createPerson() throws InterruptedException, ExecutionException, TimeoutException {
-		final String url = "ws://localhost:8080/handler";
-		CountDownLatch latch = new CountDownLatch(1);
-
-		WebSocketStompClient stompClient = new WebSocketStompClient(new SockJsClient(List.of(new WebSocketTransport(new StandardWebSocketClient()))));
-		stompClient.setMessageConverter(new StringMessageConverter());
-
-		WebSocketHttpHeaders header = new WebSocketHttpHeaders();
-		header.add("fileType","CSV");
-
-		StompSession stompSession = stompClient.connect(url, header, new StompSessionHandlerAdapter() {}).get(10, SECONDS);
-		stompSession.subscribe("/topics/persons", new StompFrameHandler() {
-
-			@Override
-			public Type getPayloadType(StompHeaders headers) {
-				return String.class;
-			}
-
-			@Override
-			public void handleFrame(StompHeaders headers, Object payload) {
-				System.out.println("Received message: " + payload);
-				latch.countDown();
-			}
-		});
-		Mdz.Person person = Mdz.Person.newBuilder().setName("testname").setDob("2001-02-03").setSalary(852145).setAge(25).build();
-		String response = Base64.getEncoder().encodeToString(person.toByteArray());
-
-		stompSession.send("/app/persons", response);
-		if (!latch.await(10, TimeUnit.SECONDS)) {
-			fail("Message not received");
-		}
-		else {
-			assertTrue(Boolean.TRUE);
-		}
-	}
+//	@Test
+//	public void createPerson() throws InterruptedException, ExecutionException, TimeoutException {
+//		final String url = "ws://localhost:8080/handler";
+//		CountDownLatch latch = new CountDownLatch(1);
+//
+//		WebSocketStompClient stompClient = new WebSocketStompClient(new SockJsClient(List.of(new WebSocketTransport(new StandardWebSocketClient()))));
+//		stompClient.setMessageConverter(new StringMessageConverter());
+//
+//		WebSocketHttpHeaders header = new WebSocketHttpHeaders();
+//		header.add("fileType","CSV");
+//
+//		StompSession stompSession = stompClient.connect(url, header, new StompSessionHandlerAdapter() {}).get(10, SECONDS);
+//		stompSession.subscribe("/topics/persons", new StompFrameHandler() {
+//
+//			@Override
+//			public Type getPayloadType(StompHeaders headers) {
+//				return String.class;
+//			}
+//
+//			@Override
+//			public void handleFrame(StompHeaders headers, Object payload) {
+//				System.out.println("Received message: " + payload);
+//				latch.countDown();
+//			}
+//		});
+//		Mdz.Person person = Mdz.Person.newBuilder().setName("testname").setDob("2001-02-03").setSalary(852145).setAge(25).build();
+//		String response = Base64.getEncoder().encodeToString(person.toByteArray());
+//
+//		stompSession.send("/app/persons", response);
+//		if (!latch.await(10, TimeUnit.SECONDS)) {
+//			fail("Message not received");
+//		}
+//		else {
+//			assertTrue(Boolean.TRUE);
+//		}
+//	}
 	@Test
 	public void getALlpersons() throws IOException {
 		final String url = "http://localhost:8080/api/persons";
