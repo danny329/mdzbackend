@@ -5,22 +5,26 @@ import com.azure.storage.blob.BlobContainerClient;
 import com.azure.storage.blob.BlobServiceClient;
 import com.azure.storage.blob.BlobServiceClientBuilder;
 import com.azure.storage.blob.models.BlobItem;
-import com.fasterxml.jackson.core.JsonProcessingException;
-import com.fasterxml.jackson.dataformat.csv.CsvMapper;
-import com.fasterxml.jackson.dataformat.csv.CsvSchema;
+
 import com.fasterxml.uuid.Generators;
 import com.mdz.mdzbackend.model.Mdz;
-import io.swagger.models.auth.In;
+import com.microsoft.azure.storage.CloudStorageAccount;
+import com.microsoft.azure.storage.StorageException;
+import com.microsoft.azure.storage.blob.CloudBlobClient;
+import com.microsoft.azure.storage.blob.CloudBlobContainer;
+import com.microsoft.azure.storage.blob.CloudBlockBlob;
 import lombok.extern.slf4j.Slf4j;
+import org.jdom2.JDOMException;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 
 import java.io.*;
+import java.net.URISyntaxException;
 import java.nio.charset.StandardCharsets;
+import java.security.InvalidKeyException;
 import java.util.ArrayList;
-import java.util.Arrays;
+import java.util.Base64;
 import java.util.List;
-import java.util.UUID;
 
 
 
@@ -45,57 +49,101 @@ public class ObjectStorageService {
         return container;
     }
     //    get all files
-    public List<String> listFiles(){
-        BlobContainerClient containerCsv = csvContainer();
+    public String listFiles(String type){
+        BlobContainerClient container;
+        if (type.equals("CSV")){
+            container = csvContainer();
+        }
+        else{
+            container = xmlContainer();
+        }
+        Mdz.ListOfFiles.Builder listOfFiles = Mdz.ListOfFiles.newBuilder();
+
         List<String> list = new ArrayList<String>();
-        for(BlobItem blobItem: containerCsv.listBlobs()){
+        for(BlobItem blobItem: container.listBlobs()){
             list.add(blobItem.getName());
         }
-        return list;
+        Mdz.ListOfFiles listOfFile = listOfFiles.addAllFilename(list).build();
+        String response = Base64.getEncoder().encodeToString(listOfFile.toByteArray());
+
+        return response;
     }
     // upload file
-    public String storeFile(Mdz.Person person, String type) throws IOException {
-        String filename = Generators.timeBasedGenerator().generate().toString()+"."+type;
+    public Boolean storeFile(String filename, Mdz.Person person, String type) throws IOException, JDOMException {
         if(type.equals("CSV")){
             BlobClient client = csvContainer().getBlobClient(filename);
             if(client.exists()){
-                return "Failed";
+                return Boolean.FALSE;
             }
             else {
-                CsvMapper mapper = new CsvMapper();
-                CsvSchema.Builder schemaBuilder = CsvSchema.builder();
-                schemaBuilder.setUseHeader(true);
-                ArrayList<String> columns = new ArrayList<String>(Arrays.asList("Name", "Dob", "Salary", "Age"));
-                ArrayList<String> data = new ArrayList<String>(Arrays.asList(person.getName(), person.getDob(), String.valueOf(person.getSalary()), String.valueOf(person.getAge())));
-                schemaBuilder.addColumns(columns, CsvSchema.ColumnType.STRING);
-                String source = mapper.writer(schemaBuilder.build()).writeValueAsString(data);
-                InputStream inputStream = new ByteArrayInputStream(source.getBytes(StandardCharsets.UTF_8));
+                ConverterService converterService = new ConverterService();
+                InputStream inputStream = converterService.ProtoToCsv(person);
                 client.upload(inputStream, inputStream.available());
             }
         }
         if(type.equals("XML")){
             BlobClient client = xmlContainer().getBlobClient(filename);
             if(client.exists()){
-                return "Failed";
+                return Boolean.FALSE;
+
             }else {
-                client.upload(content,length);
+                ConverterService converterService = new ConverterService();
+                InputStream inputStream = converterService.ProtoToXml(person);
+                client.upload(inputStream, inputStream.available());
             }
         }
-        return filename;
-    }
-    // download file
-    public ByteArrayOutputStream downloadFile(String filename, String type){
-        BlobContainerClient container = csvContainer();
-        BlobClient blobClient = container.getBlobClient(filename);
-        ByteArrayOutputStream bos = new ByteArrayOutputStream();
-        blobClient.download(bos);
-        return bos;
-    }
-    // delete file
-    public Boolean deleteFile(String filename, String type){
-        BlobContainerClient container = csvContainer();
-        BlobClient blobClient = container.getBlobClient(filename);
-        blobClient.delete();
         return Boolean.TRUE;
     }
+    // download file
+    public String downloadFile(String filename, String type) throws JDOMException, IOException {
+        Mdz.Person person;
+        BlobContainerClient container;
+        BlobClient blobClient;
+        if(type.equals("CSV")) {
+            container = csvContainer();
+        }
+        else {
+            container = xmlContainer();
+        }
+        blobClient = container.getBlobClient(filename);
+        ByteArrayOutputStream bos = new ByteArrayOutputStream();
+        blobClient.download(bos);
+        InputStream inputStream = new ByteArrayInputStream(bos.toByteArray());
+        ConverterService converterService = new ConverterService();
+
+        if(type.equals("CSV")) {
+            person = converterService.CsvToProto(inputStream);
+        }
+        else {
+            person = converterService.XmlToProto(inputStream);
+        }
+        String response = Base64.getEncoder().encodeToString(person.toByteArray());
+
+        return response;
+    }
+    // delete file
+    public Boolean deleteFile(String filename, String type) throws URISyntaxException, InvalidKeyException, StorageException {
+        String containerName;
+        if(type.equals("CSV")) {
+            containerName = csvfolder;
+        }
+        else {
+            containerName = xmlfolder;
+        }
+        CloudStorageAccount storageAccount = CloudStorageAccount.parse(connectionstring);
+
+        // Create the blob client.
+        CloudBlobClient blobClient = storageAccount.createCloudBlobClient();
+
+        // Retrieve reference to a previously created container.
+        CloudBlobContainer container = blobClient.getContainerReference(containerName);
+
+        // Retrieve reference to a blob named "myimage.jpg".
+        CloudBlockBlob blob = container.getBlockBlobReference(filename);
+
+        // Delete the blob.
+        blob.deleteIfExists();
+        return Boolean.TRUE;
+    }
+
 }
