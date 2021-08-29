@@ -1,0 +1,2 @@
+curl -X GET "http://127.0.0.1:8080" -H "accept: application/x-protobuf" -H "fileType: CSV"
+#curl -X GET "https://mdzbackend.azurewebsites.net/api/persons" -H "accept: application/x-protobuf" -H "fileType: CSV"
