@@ -18,7 +18,7 @@ import java.util.Base64;
 @Controller
 @RequiredArgsConstructor
 //@CrossOrigin(origins = "http://localhost:3000")
-@CrossOrigin(origins = "https://nice-pond-0fa3a9900.azurestaticapps.net")
+//@CrossOrigin(origins = "https://nice-pond-0fa3a9900.azurestaticapps.net")
 public class PersonWebsocketController {
     private final ObjectStorageService objectStorageService;
     //    create - post - websocket

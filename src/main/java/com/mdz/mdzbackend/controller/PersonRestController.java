@@ -14,7 +14,7 @@ import java.util.List;
 @RequestMapping("/api")
 @RequiredArgsConstructor
 //@CrossOrigin(origins = "http://localhost:3000")
-@CrossOrigin(origins = "https://nice-pond-0fa3a9900.azurestaticapps.net")
+//@CrossOrigin(origins = "https://nice-pond-0fa3a9900.azurestaticapps.net")
 public class PersonRestController {
     private final ObjectStorageService objectStorageService;
     //    fetch all- get - http
