@@ -75,7 +75,7 @@ class MdzbackendApplicationTests {
 //	}
 	@Test
 	public void getALlpersons() throws IOException {
-		final String url = "http://localhost:8080/api/persons";
+		final String url = "https://mdzbackend.azurewebsites.net/api/persons";
 		HttpClient client = HttpClients.custom().build();
 		HttpUriRequest request = RequestBuilder.get()
 				.setUri(url)
@@ -92,7 +92,7 @@ class MdzbackendApplicationTests {
 	@Test
 	public void getperson() throws IOException {
 		final String filename = "e0042cbf-08dc-11ec-8ef3-771f99cffc95.CSV";
-		final String url = "http://localhost:8080/api/persons/"+filename;
+		final String url = "https://mdzbackend.azurewebsites.net/api/persons/"+filename;
 		HttpClient client = HttpClients.custom().build();
 		HttpUriRequest request = RequestBuilder.get()
 				.setUri(url)
