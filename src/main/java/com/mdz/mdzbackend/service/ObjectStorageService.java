@@ -59,7 +59,9 @@ public class ObjectStorageService {
 
         List<String> list = new ArrayList<String>();
         for(ListBlobItem blobItem: container.listBlobs()){
-            list.add(blobItem.getUri().toString());
+            String uri = blobItem.getUri().toString();
+            String filename = uri.substring(uri.lastIndexOf("/")+1, uri.length());
+            list.add(filename);
         }
         Mdz.ListOfFiles listOfFile = listOfFiles.addAllFilename(list).build();
         String response = Base64.getEncoder().encodeToString(listOfFile.toByteArray());
