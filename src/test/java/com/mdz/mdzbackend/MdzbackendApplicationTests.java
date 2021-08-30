@@ -73,36 +73,36 @@ class MdzbackendApplicationTests {
 //			assertTrue(Boolean.TRUE);
 //		}
 //	}
-//	@Test
-//	public void getALlpersons() throws IOException {
-//		final String url = "https://mdzbackend.azurewebsites.net/api/persons";
-//		HttpClient client = HttpClients.custom().build();
-//		HttpUriRequest request = RequestBuilder.get()
-//				.setUri(url)
-//				.setHeader("fileType", "CSV")
-//				.build();
-//		client.execute(request);
-//		// When
-//		HttpResponse httpResponse = HttpClientBuilder.create().build().execute( request );
-//
-//		// Then
-//		MatcherAssert.assertThat(httpResponse.getStatusLine().getStatusCode(), equalTo(200));
-//	}
-//
-//	@Test
-//	public void getperson() throws IOException {
-//		final String filename = "e0042cbf-08dc-11ec-8ef3-771f99cffc95.CSV";
-//		final String url = "https://mdzbackend.azurewebsites.net/api/persons/"+filename;
-//		HttpClient client = HttpClients.custom().build();
-//		HttpUriRequest request = RequestBuilder.get()
-//				.setUri(url)
-//				.setHeader("fileType", "CSV")
-//				.build();
-//		client.execute(request);
-//		// When
-//		HttpResponse httpResponse = HttpClientBuilder.create().build().execute( request );
-//
-//		// Then
-//		MatcherAssert.assertThat(httpResponse.getStatusLine().getStatusCode(), equalTo(200));
-//	}
+	@Test
+	public void getALlpersons() throws IOException {
+		final String url = "https://mdzbackend.azurewebsites.net/api/persons";
+		HttpClient client = HttpClients.custom().build();
+		HttpUriRequest request = RequestBuilder.get()
+				.setUri(url)
+				.setHeader("fileType", "CSV")
+				.build();
+		client.execute(request);
+		// When
+		HttpResponse httpResponse = HttpClientBuilder.create().build().execute( request );
+
+		// Then
+		MatcherAssert.assertThat(httpResponse.getStatusLine().getStatusCode(), equalTo(200));
+	}
+
+	@Test
+	public void getperson() throws IOException {
+		final String filename = "e0042cbf-08dc-11ec-8ef3-771f99cffc95.CSV";
+		final String url = "https://mdzbackend.azurewebsites.net/api/persons/"+filename;
+		HttpClient client = HttpClients.custom().build();
+		HttpUriRequest request = RequestBuilder.get()
+				.setUri(url)
+				.setHeader("fileType", "CSV")
+				.build();
+		client.execute(request);
+		// When
+		HttpResponse httpResponse = HttpClientBuilder.create().build().execute( request );
+
+		// Then
+		MatcherAssert.assertThat(httpResponse.getStatusLine().getStatusCode(), equalTo(200));
+	}
 }
