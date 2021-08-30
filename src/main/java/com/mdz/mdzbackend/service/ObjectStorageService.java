@@ -13,6 +13,7 @@ import com.microsoft.azure.storage.StorageException;
 import com.microsoft.azure.storage.blob.CloudBlobClient;
 import com.microsoft.azure.storage.blob.CloudBlobContainer;
 import com.microsoft.azure.storage.blob.CloudBlockBlob;
+import com.microsoft.azure.storage.blob.ListBlobItem;
 import lombok.extern.slf4j.Slf4j;
 import org.jdom2.JDOMException;
 import org.springframework.beans.factory.annotation.Value;
@@ -38,30 +39,27 @@ public class ObjectStorageService {
     @Value("${azure.storage.connectionstring}")
     private String connectionstring;
 
-    private BlobContainerClient csvContainer(){
-        BlobServiceClient serviceClient = new BlobServiceClientBuilder().connectionString(connectionstring).buildClient();
-        BlobContainerClient container = serviceClient.getBlobContainerClient(csvfolder);
-        return container;
-    }
-    private BlobContainerClient xmlContainer(){
-        BlobServiceClient serviceClient = new BlobServiceClientBuilder().connectionString(connectionstring).buildClient();
-        BlobContainerClient container = serviceClient.getBlobContainerClient(xmlfolder);
-        return container;
-    }
+
     //    get all files
-    public String listFiles(String type){
-        BlobContainerClient container;
-        if (type.equals("CSV")){
-            container = csvContainer();
+    public String listFiles(String type) throws URISyntaxException, InvalidKeyException, StorageException {
+        String containerName;
+        if(type.equals("CSV")) {
+            containerName = csvfolder;
         }
-        else{
-            container = xmlContainer();
+        else {
+            containerName = xmlfolder;
         }
+        CloudStorageAccount storageAccount = CloudStorageAccount.parse(connectionstring);
+        // Create the blob client.
+        CloudBlobClient blobClient = storageAccount.createCloudBlobClient();
+        // Retrieve reference to a previously created container.
+        CloudBlobContainer container = blobClient.getContainerReference(containerName);
+
         Mdz.ListOfFiles.Builder listOfFiles = Mdz.ListOfFiles.newBuilder();
 
         List<String> list = new ArrayList<String>();
-        for(BlobItem blobItem: container.listBlobs()){
-            list.add(blobItem.getName());
+        for(ListBlobItem blobItem: container.listBlobs()){
+            list.add(blobItem.getUri().toString());
         }
         Mdz.ListOfFiles listOfFile = listOfFiles.addAllFilename(list).build();
         String response = Base64.getEncoder().encodeToString(listOfFile.toByteArray());
@@ -69,45 +67,44 @@ public class ObjectStorageService {
         return response;
     }
     // upload file
-    public Boolean storeFile(String filename, Mdz.Person person, String type) throws IOException, JDOMException {
-        if(type.equals("CSV")){
-            BlobClient client = csvContainer().getBlobClient(filename);
-            if(client.exists()){
-                return Boolean.FALSE;
-            }
-            else {
-                ConverterService converterService = new ConverterService();
-                InputStream inputStream = converterService.ProtoToCsv(person);
-                client.upload(inputStream, inputStream.available());
-            }
+    public Boolean storeFile(String filename, Mdz.Person person, String type) throws IOException, JDOMException, URISyntaxException, InvalidKeyException, StorageException {
+        String containerName;
+        if(type.equals("CSV")) {
+            containerName = csvfolder;
         }
-        if(type.equals("XML")){
-            BlobClient client = xmlContainer().getBlobClient(filename);
-            if(client.exists()){
-                return Boolean.FALSE;
-
-            }else {
-                ConverterService converterService = new ConverterService();
-                InputStream inputStream = converterService.ProtoToXml(person);
-                client.upload(inputStream, inputStream.available());
-            }
+        else {
+            containerName = xmlfolder;
         }
+        CloudStorageAccount storageAccount = CloudStorageAccount.parse(connectionstring);
+        // Create the blob client.
+        CloudBlobClient blobClient = storageAccount.createCloudBlobClient();
+        // Retrieve reference to a previously created container.
+        CloudBlobContainer container = blobClient.getContainerReference(containerName);
+        CloudBlockBlob blob = container.getBlockBlobReference(filename);
+        ConverterService converterService = new ConverterService();
+        InputStream inputStream = converterService.ProtoToCsv(person);
+        blob.upload(inputStream, inputStream.available());
         return Boolean.TRUE;
     }
     // download file
-    public String downloadFile(String filename, String type) throws JDOMException, IOException {
+    public String downloadFile(String filename, String type) throws JDOMException, IOException, URISyntaxException, InvalidKeyException, StorageException {
         Mdz.Person person;
-        BlobContainerClient container;
-        BlobClient blobClient;
+        String containerName;
         if(type.equals("CSV")) {
-            container = csvContainer();
+            containerName = csvfolder;
         }
         else {
-            container = xmlContainer();
+            containerName = xmlfolder;
         }
-        blobClient = container.getBlobClient(filename);
+        CloudStorageAccount storageAccount = CloudStorageAccount.parse(connectionstring);
+        // Create the blob client.
+        CloudBlobClient blobClient = storageAccount.createCloudBlobClient();
+        // Retrieve reference to a previously created container.
+        CloudBlobContainer container = blobClient.getContainerReference(containerName);
+        // Retrieve reference to a blob named "myimage.jpg".
+        CloudBlockBlob blob = container.getBlockBlobReference(filename);
         ByteArrayOutputStream bos = new ByteArrayOutputStream();
-        blobClient.download(bos);
+        blob.download(bos);
         InputStream inputStream = new ByteArrayInputStream(bos.toByteArray());
         ConverterService converterService = new ConverterService();
 
@@ -131,13 +128,10 @@ public class ObjectStorageService {
             containerName = xmlfolder;
         }
         CloudStorageAccount storageAccount = CloudStorageAccount.parse(connectionstring);
-
         // Create the blob client.
         CloudBlobClient blobClient = storageAccount.createCloudBlobClient();
-
         // Retrieve reference to a previously created container.
         CloudBlobContainer container = blobClient.getContainerReference(containerName);
-
         // Retrieve reference to a blob named "myimage.jpg".
         CloudBlockBlob blob = container.getBlockBlobReference(filename);
 
